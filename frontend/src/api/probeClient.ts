@@ -25,6 +25,7 @@ export const probeClient = {
   current: () => request<ProbeSnapshot>('/api/telemetry/current'),
   history: (metric: string, limit = 300) => request<{metric: string; points: Array<{timestamp:number; value:number; metric:string}>}>(`/api/telemetry/history?metric=${encodeURIComponent(metric)}&limit=${limit}`),
   injectFault: (fault: string) => request<{ok:boolean; fault:string; snapshot:ProbeSnapshot}>('/api/faults/inject', { method: 'POST', body: JSON.stringify({ fault }) }),
+  resetState: () => request<{ok:boolean; message:string; snapshot:ProbeSnapshot}>('/api/state/reset', { method: 'POST' }),
   command: (action: string, humanApproved = false) => request('/api/command', { method: 'POST', body: JSON.stringify({ action, params: {}, source: 'mission-control-ui', human_approved: humanApproved }) }),
   diagnose: () => request<DiagnosisResponse>('/api/agent/diagnose', { method: 'POST', body: JSON.stringify({ reason: 'manual-ui' }) }),
   gemmaStatus: () => request('/api/agent/gemma/status'),

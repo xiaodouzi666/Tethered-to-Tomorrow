@@ -3,19 +3,38 @@ import { BrainCircuit, ShieldCheck } from 'lucide-react';
 import { probeClient } from '../api/probeClient';
 import type { DiagnosisResponse, HealthResponse } from '../types';
 
-export function AgentPanel({ health }: { health: HealthResponse | null }) {
+export function AgentPanel({ health, onUplink }: { health: HealthResponse | null; onUplink: () => void }) {
   const [diagnosis, setDiagnosis] = useState<DiagnosisResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [actionStatus, setActionStatus] = useState<string | null>(null);
 
   async function runDiagnosis() {
     setBusy(true);
     setError(null);
+    setActionStatus(null);
     try {
       const result = await probeClient.diagnose();
       setDiagnosis(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function executeSuggestedAction(action: string) {
+    setBusy(true);
+    setError(null);
+    setActionStatus(`Sending ${action}...`);
+    const needsHumanApproval = diagnosis?.safety_gate.high_risk_actions.some(x => x.action === action) ?? false;
+    try {
+      await probeClient.command(action, needsHumanApproval);
+      setActionStatus(`Executed ${action}.`);
+      onUplink();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setActionStatus(null);
     } finally {
       setBusy(false);
     }
@@ -28,13 +47,13 @@ export function AgentPanel({ health }: { health: HealthResponse | null }) {
       <div className="gemma-status">
         <span className={`status-dot ${gemma?.ready ? 'ok' : 'fault'}`} />
         <div>
-          <strong>Gemma backend: {gemma?.backend_active ?? 'unknown'}</strong>
+          <strong>E4B backend: {gemma?.backend_active ?? 'unknown'}</strong>
           <p>{gemma?.message ?? 'Waiting for probe health...'}</p>
-          <p className="muted">Model: {gemma?.model_file ?? 'waiting for config'}</p>
+          <p className="muted">Model: {gemma?.model ?? gemma?.model_file ?? 'waiting for config'}</p>
         </div>
       </div>
       <button className="primary" disabled={busy} onClick={runDiagnosis}>
-        {busy ? 'Running...' : 'Run Onboard Gemma Diagnosis'}
+        {busy ? 'Running...' : 'Run Onboard E4B Diagnosis'}
       </button>
       {error && <div className="error-box">{error}</div>}
       {diagnosis && (
@@ -53,8 +72,20 @@ export function AgentPanel({ health }: { health: HealthResponse | null }) {
           ))}
           <div className="subheading">Allowed Immediate Actions</div>
           <div className="chips">
-            {diagnosis.safety_gate.allowed_actions.map(a => <span key={a}>{a}</span>)}
+            {diagnosis.safety_gate.allowed_actions.map(a => {
+              const highRisk = diagnosis.safety_gate.high_risk_actions.some(x => x.action === a);
+              return (
+                <button
+                  className={`chip-button ${highRisk ? 'danger' : ''}`}
+                  disabled={busy}
+                  key={a}
+                  onClick={() => executeSuggestedAction(a)}>
+                  {a}{highRisk ? ' (HITL)' : ''}
+                </button>
+              );
+            })}
           </div>
+          {actionStatus && <div className="action-status">{actionStatus}</div>}
           {diagnosis.safety_gate.high_risk_actions.length > 0 && (
             <div className="warning-box">High-risk action(s) require explicit human approval.</div>
           )}

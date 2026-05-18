@@ -10,17 +10,17 @@ const DSN = [
   { name: 'Canberra DSN', position: [148.98, -35.40] as [number, number], color: [35, 180, 255] as [number, number, number] }
 ];
 
-const PROBE = { name: 'Voyager-RPi-01', position: [78, 18] as [number, number] };
+const PROBE = { name: 'DeepRepair-Probe-01', position: [78, 18] as [number, number] };
 
 interface HeroSignalViewProps {
   linkStatus: 'connecting' | 'online' | 'offline';
   mode?: string;
   activeFault?: string;
-  uplinkPulse?: number;
+  uplinkPulse?: boolean;
 }
 
-export function HeroSignalView({ linkStatus, mode, activeFault, uplinkPulse = 0 }: HeroSignalViewProps) {
-  const pulse = uplinkPulse % 2 === 1;
+export function HeroSignalView({ linkStatus, mode, activeFault, uplinkPulse = false }: HeroSignalViewProps) {
+  const pulse = Boolean(uplinkPulse);
 
   const layers = useMemo(() => {
     const arcs = DSN.map((dsn) => ({
@@ -77,7 +77,7 @@ export function HeroSignalView({ linkStatus, mode, activeFault, uplinkPulse = 0 
   const tooltip = ({ object }: PickingInfo) => object?.name;
 
   return (
-    <section className="hero-card">
+    <section className="hero-card" data-uplink-pulse={pulse ? 'active' : 'idle'}>
       <div className="hero-overlay">
         <div className="hero-title"><Radio size={16}/> Signal Delay View</div>
         <div className="hero-stats">

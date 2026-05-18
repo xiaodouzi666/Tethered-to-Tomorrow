@@ -1,6 +1,6 @@
 # 飞船端 agents 设计
 
-当前 v1 先把树莓派端 agents 固定成 4 个小角色，避免一开始做成不可控的“万能 agent”。
+当前 v1 先把 Mac 本机 Probe backend 里的 agents 固定成 4 个小角色，避免一开始做成不可控的“万能 agent”。
 
 ## 1. TelemetryAnomalyAgent
 
@@ -13,9 +13,9 @@
 - anomaly_summary
 - recommended_agent_next_step
 
-## 2. OnboardGemmaDiagnosisAgent
+## 2. OnboardE4BDiagnosisAgent
 
-职责：调用树莓派本地 Gemma 4 backend，对当前故障做结构化摘要。
+职责：调用远程服务器 vLLM 上的 E4B backend，对当前故障做结构化摘要。
 
 输出必须是 JSON：
 
@@ -32,7 +32,7 @@
 
 ## 3. SafetyGateAgent
 
-职责：验证 Gemma 建议动作是否来自白名单，过滤高风险动作。
+职责：验证 E4B 建议动作是否来自白名单，过滤高风险动作。
 
 ## 4. CommandExecutorAgent
 

@@ -3,7 +3,8 @@ export function OpenMctSection() {
     <section className="panel openmct-panel">
       <div className="panel-title">Open MCT Telemetry Page</div>
       <p>
-        打开独立 Open MCT 页面查看同一组树莓派实时/历史遥测。它使用 <code>real/*</code> 命名空间，下一版会加入 <code>twin/*</code> 预测通道。
+        Open the connected Open MCT workspace for mission telemetry and Twin forecast review.
+        The object tree now exposes <code>real/*</code> for live and historical Probe data and <code>twin/*</code> for prediction channels generated from the current Twin run.
       </p>
       <a className="primary-link" href="/openmct.html" target="_blank" rel="noreferrer">Open MCT →</a>
     </section>

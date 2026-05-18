@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Satellite, WifiOff, Wifi, RefreshCw } from 'lucide-react';
 import { useProbeTelemetry } from './hooks/useProbeTelemetry';
 import { HeroSignalView } from './components/HeroSignalView';
@@ -6,18 +6,34 @@ import { StatusCards } from './components/StatusCards';
 import { TelemetryDashboard } from './components/TelemetryDashboard';
 import { CommandConsole } from './components/CommandConsole';
 import { AgentPanel } from './components/AgentPanel';
-import { TwinPlaceholder } from './components/TwinPlaceholder';
 import { OpenMctSection } from './components/OpenMctSection';
+import { TwinLaunchSection } from './components/TwinLaunchSection';
 import './styles.css';
 
 export default function App() {
   const { snapshot, health, linkStatus, error, refreshHealth } = useProbeTelemetry();
-  const [uplinkPulse, setUplinkPulse] = useState(0);
+  const [uplinkPulse, setUplinkPulse] = useState(false);
+  const uplinkPulseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerUplinkPulse = useCallback(() => {
+    setUplinkPulse(true);
+    if (uplinkPulseTimer.current) clearTimeout(uplinkPulseTimer.current);
+    uplinkPulseTimer.current = setTimeout(() => {
+      setUplinkPulse(false);
+      uplinkPulseTimer.current = null;
+    }, 900);
+  }, []);
 
   useEffect(() => {
     const t = setInterval(refreshHealth, 5000);
     return () => clearInterval(t);
   }, [refreshHealth]);
+
+  useEffect(() => {
+    return () => {
+      if (uplinkPulseTimer.current) clearTimeout(uplinkPulseTimer.current);
+    };
+  }, []);
 
   return (
     <div className="app-shell">
@@ -42,12 +58,12 @@ export default function App() {
 
         <div className="center-column">
           <TelemetryDashboard snapshot={snapshot} />
-          <TwinPlaceholder />
+          <TwinLaunchSection />
         </div>
 
         <div className="right-column">
-          <AgentPanel health={health} />
-          <CommandConsole onUplink={() => setUplinkPulse(p => p + 1)} />
+          <AgentPanel health={health} onUplink={triggerUplinkPulse} />
+          <CommandConsole onUplink={triggerUplinkPulse} />
         </div>
       </main>
     </div>

@@ -1,170 +1,307 @@
-# DeepRepair Mission Control v1
+# DeepRepair Mission Control
 
-第一版目标：先跑通两部分代码。
+DeepRepair Mission Control is an operations-style spacecraft recovery demo. It connects a live Probe simulator, an E4B/Gemma reasoning layer, a policy-gated recovery orchestrator, a Ground Twin planner, a modular testbed, and Open MCT telemetry views into one end-to-end mission-control workflow.
 
-1. **电脑端前端**：`Open MCT + deck.gl Hero View` 的 Mission Control 控制台。当前版本暂不实现完整数字孪生，只保留 Twin 区域占位与 Real/Twin 的接口命名，为下一版接入 Twin Service 做准备。
-2. **树莓派端飞船模拟器**：树莓派模拟远程深空探测器，提供遥测、故障注入、白名单命令执行、端侧 agents，并支持调用树莓派本地 Gemma 4（LiteRT-LM）做 onboard diagnosis。
+The demo is designed for a Mac-hosted backend and frontend, with the E4B/Gemma model served separately through a remote OpenAI-compatible vLLM endpoint.
 
-> 开发联调可以用 `scripts/start_probe_mock.sh` 启用 `mock` Gemma 兜底，方便你在没有下载模型时先跑通前端和命令链路。真正上树莓派录 demo 时，使用真实 Gemma 启动脚本；此时如果本地 Gemma 没接上，agent 接口会直接报错，避免无意中录成 mock。
+## What It Shows
 
----
+- Live spacecraft telemetry with fault injection and command execution.
+- Probe-side diagnosis through a remote fine-tuned E4B/Gemma model.
+- Helm-style recovery reasoning with manual, assisted, and automatic review modes.
+- Policy-gated execution for low-risk and high-risk recovery commands.
+- Ground Twin plan comparison, playback, hidden-state inspection, and constraint checks.
+- A modular Ground Twin Testbed for assembly validation, Twin-only faults, simulation campaigns, command packages, and simulated uplink.
+- Open MCT views for real telemetry and Twin-predicted telemetry channels.
 
-## 目录结构
+## Repository Layout
 
 ```text
-frontend/        # 电脑端 Mission Control 前端，React + TypeScript + deck.gl + Open MCT page
-pi_probe/        # 树莓派端 Probe Emulator + onboard agents + Gemma adapter
-scripts/         # 启动、安装、联调脚本
-docs/            # 接口、agent 设计和演示说明
+frontend/        React + TypeScript Mission Control UI, Ground Twin UI, Open MCT entrypoints
+pi_probe/        FastAPI Probe simulator, telemetry, agents, Helm, orchestrator, Twin engine
+scripts/         Install, backend, frontend, and remote vLLM startup scripts
+docs/            API notes, agent design notes, and final test/demo instructions
+assets/          Shared 3D and visual assets
 ```
 
----
+## Architecture
 
-## 一、树莓派端启动
-
-### 1. 安装 Python 依赖
-
-```bash
-cd deeprepair_mission_control_v1
-bash scripts/pi_install.sh
+```text
+Remote GPU host
+  vLLM OpenAI-compatible API
+  fine-tuned E4B/Gemma model
+          |
+          | GEMMA_API_BASE
+          v
+Mac / local development machine
+  FastAPI Probe backend on :8010
+    - Probe state simulator
+    - telemetry history and websocket stream
+    - fault injection
+    - command whitelist and safety gate
+    - E4B/Gemma adapter
+    - Helm runtime
+    - recovery orchestrator
+    - Ground Twin engine and testbed
+          |
+          | VITE_PROBE_API_BASE / VITE_PROBE_WS_BASE
+          v
+  Vite frontend on :5173
+    - Mission Control
+    - Ground Twin Testbed
+    - Open MCT
 ```
 
-### 2. 启动飞船模拟器（开发/mock 模式）
+## Prerequisites
+
+- Python 3.10 or newer
+- Node.js 18 or newer
+- npm
+- A remote vLLM server for the real E4B/Gemma path, or mock mode for local UI/backend testing
+
+Python dependencies are listed in [pi_probe/requirements.txt](pi_probe/requirements.txt). Frontend dependencies are listed in [frontend/package.json](frontend/package.json).
+
+## Quick Start: Mock Mode
+
+Use this path when the remote model service is not available and you only need the local application flow.
 
 ```bash
+git clone https://github.com/xiaodouzi666/Tethered-to-Tomorrow.git
+cd Tethered-to-Tomorrow
+
+bash scripts/install_probe_backend.sh
 bash scripts/start_probe_mock.sh
 ```
 
-默认端口：`8010`。
-
-健康检查：
+In another terminal:
 
 ```bash
-curl http://localhost:8010/health
+bash scripts/start_frontend.sh
 ```
 
-### 3. 启动飞船模拟器（真实 Gemma 4 LiteRT 模式）
-
-先准备默认 Gemma 4 E2B LiteRT-LM：
-
-```bash
-bash scripts/pi_prepare_gemma_e2b.sh
-```
-
-然后启动：
-
-```bash
-bash scripts/start_probe_gemma_e2b.sh
-```
-
-默认真实模型配置：
-
-```bash
-GEMMA_BACKEND=litert_cli
-GEMMA_MODEL_REPO=litert-community/gemma-4-E2B-it-litert-lm
-GEMMA_MODEL_FILE=gemma-4-E2B-it.litertlm
-REQUIRE_REAL_GEMMA=1
-```
-
-验证 Gemma 是否真的接上：
-
-```bash
-curl http://localhost:8010/api/agent/gemma/status
-curl -X POST http://localhost:8010/api/agent/diagnose \
-  -H 'Content-Type: application/json' \
-  -d '{"reason":"manual-test"}'
-```
-
----
-
-## 二、电脑端前端启动
-
-### 1. 设置树莓派 API 地址
-
-复制环境变量示例：
-
-```bash
-cd frontend
-cp .env.example .env
-```
-
-如果树莓派 IP 是 `192.168.1.80`，修改：
-
-```bash
-VITE_PROBE_API_BASE=http://192.168.1.80:8010
-VITE_PROBE_WS_BASE=ws://192.168.1.80:8010
-```
-
-本机联调 mock 时可用：
-
-```bash
-VITE_PROBE_API_BASE=http://localhost:8010
-VITE_PROBE_WS_BASE=ws://localhost:8010
-```
-
-### 2. 安装并启动前端
-
-```bash
-npm install
-npm run dev
-```
-
-打开：
+Open:
 
 ```text
 http://localhost:5173
 ```
 
-Open MCT 独立页：
+## Quick Start: Remote E4B/Gemma Mode
 
-```text
-http://localhost:5173/openmct.html
+### 1. Start vLLM on the GPU Host
+
+Run this on the remote machine that has the fine-tuned model checkpoint available:
+
+```bash
+export GEMMA_MODEL=gemma4_e4b_tuned
+export VLLM_PORT=8000
+bash scripts/server_start_vllm_e4b.sh
 ```
 
----
+Validate the model endpoint from the Mac:
 
-## 三、端到端联调顺序
+```bash
+curl http://<remote-host>:8000/v1/models
+```
 
-1. 树莓派启动 `scripts/start_probe_mock.sh` 或 `scripts/start_probe_gemma_e2b.sh`
-2. 电脑端启动 `frontend/npm run dev`
-3. 前端顶部检查 `Probe Link: ONLINE`
-4. 点击 `Inject Thermal Fault`
-5. 点击 `Run Onboard Gemma Diagnosis`
-6. 点击 `ENTER_SAFE_MODE` / `DISABLE_PAYLOAD` 等命令
-7. 观察遥测状态变化与 agent 输出
-8. 点击 `Open MCT` 查看 Open MCT telemetry page
-9. deck.gl Hero 视图中点击/触发命令后会显示 uplink signal animation
+### 2. Start the Probe Backend on the Mac
 
----
+```bash
+cd Tethered-to-Tomorrow
+export GEMMA_API_BASE=http://<remote-host>:8000/v1
+export GEMMA_MODEL=gemma4_e4b_tuned
+bash scripts/start_probe_gemma_remote_vllm.sh
+```
 
-## 四、当前版本包含什么 / 不包含什么
+Health checks:
 
-### 包含
+```bash
+curl http://127.0.0.1:8010/health
+curl http://127.0.0.1:8010/api/agent/gemma/status
+curl http://127.0.0.1:8010/api/orchestrator/auto-session/latest
+```
 
-- 电脑端 Mission Control UI
-- deck.gl Hero Signal Delay View
-- Open MCT 独立 telemetry page（通过 Pi API 获取历史/实时数据）
-- 树莓派飞船模拟器
-- 故障注入：thermal / comms / power / sensor
-- 白名单命令执行
-- onboard agent 设计与代码
-- Gemma 4 LiteRT-LM 适配器（Python API / CLI / mock fallback）
-- 调试脚本与 curl 示例
+### 3. Start the Frontend
 
-### 暂不包含
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
 
-- 完整 Digital Twin Service
-- Real vs Twin 预测曲线叠加
-- 完整 HITL 审计回放
-- 真实 Open MCT 高级对象树布局保存
+Open:
 
-下一版重点就是把 `twin/*` channel 与 `Run in Twin` 真实接入。
+```text
+http://localhost:5173
+```
 
----
+## Main UI Entry Points
 
-## 五、重要安全设计
+- Mission Control: `http://localhost:5173/`
+- Ground Twin Testbed: `http://localhost:5173/twin`
+- Open MCT: `http://localhost:5173/openmct.html`
 
-- 所有命令必须在 `ALLOWED_COMMANDS` 白名单内。
-- agent 不能执行 shell。
-- `REQUIRE_REAL_GEMMA=1` 时，Gemma 未接通会拒绝诊断请求。
-- 端侧 Gemma 只做摘要与建议，不直接自动执行高风险命令。
+## Core Workflows
+
+### Mission Control
+
+1. Confirm `Probe Link: ONLINE`.
+2. Inspect live telemetry and subsystem status.
+3. Inject a fault such as thermal, communications, power, or sensor.
+4. Run onboard E4B diagnosis.
+5. Review the recommendation and policy gate.
+6. Execute an allowed low-risk command or keep high-risk commands gated for operator review.
+
+### Helm Recovery
+
+1. Start the backend with remote Gemma enabled.
+2. Select E4B Helm in the recovery panel.
+3. Run live analysis or enable the backend auto monitor.
+4. Review the Helm dialogue, recommendation, policy result, and execution trace.
+5. Use manual, assisted, or auto review modes depending on the demo path.
+
+### Ground Twin
+
+1. Open the Ground Twin workspace.
+2. Run `Analyze Current State`.
+3. Inspect generated plans, Twin verdicts, constraints, and telemetry projection.
+4. Use the playback timeline to step through predicted state.
+5. Switch candidate plans to compare recovery outcomes.
+
+The frontend intentionally blocks stale, expired, or invalidated baselines from reusing old playback. Run a new analysis or compare after the real Probe state changes.
+
+### Ground Twin Testbed
+
+1. Freeze a baseline.
+2. Inspect or modify the modular component graph.
+3. Inject Twin-only component faults.
+4. Run a campaign across environment branches and deterministic seeds.
+5. Build a command package.
+6. Approve and simulate uplink when the package passes policy checks.
+
+### Open MCT
+
+1. Open `openmct.html`.
+2. Browse `real/*` telemetry channels.
+3. Plot real temperature, voltage, communications, or subsystem channels.
+4. Run Twin analysis.
+5. Browse `twin/*` predicted channels when Twin data is available.
+
+## Backend Configuration
+
+Common environment variables:
+
+```text
+PROBE_HOST=127.0.0.1
+PROBE_PORT=8010
+GEMMA_BACKEND=remote_vllm
+REQUIRE_REAL_GEMMA=1
+GEMMA_API_BASE=http://<remote-host>:8000/v1
+GEMMA_MODEL=gemma4_e4b_tuned
+GEMMA_API_KEY=
+GEMMA_TEMPERATURE=0.2
+GEMMA_MAX_TOKENS=768
+HELM_AUTO_MONITOR_ENABLED=0
+HELM_LIVE_EXECUTION_ENABLED=0
+TELEMETRY_HZ=1.0
+```
+
+For mock mode:
+
+```bash
+bash scripts/start_probe_mock.sh
+```
+
+For real E4B/Gemma mode:
+
+```bash
+export GEMMA_API_BASE=http://<remote-host>:8000/v1
+bash scripts/start_probe_gemma_remote_vllm.sh
+```
+
+## Frontend Configuration
+
+[frontend/.env.example](frontend/.env.example):
+
+```text
+VITE_PROBE_API_BASE=http://localhost:8010
+VITE_PROBE_WS_BASE=ws://localhost:8010
+```
+
+Useful commands:
+
+```bash
+cd frontend
+npm install
+npm run dev
+npm run build
+npm run preview
+```
+
+## Important API Routes
+
+```text
+GET  /health
+GET  /api/telemetry/current
+GET  /api/telemetry/history?metric=thermal.temp_c&limit=300
+WS   /ws/telemetry
+POST /api/faults/inject
+POST /api/command
+POST /api/agent/diagnose
+GET  /api/agent/gemma/status
+
+POST /api/orchestrator/live/start
+GET  /api/orchestrator/session/{session_id}
+GET  /api/orchestrator/auto-session/latest
+POST /api/orchestrator/session/{session_id}/approve
+POST /api/orchestrator/session/{session_id}/execute-step
+POST /api/orchestrator/session/{session_id}/dialogue
+
+POST /api/twin/run
+POST /api/twin/compare
+GET  /api/twin/compare/{compare_id}/plan/{plan_id}/playback
+POST /api/twin/testbed/start
+POST /api/twin/testbed/{session_id}/campaign
+POST /api/twin/testbed/{session_id}/command-package
+```
+
+More API notes are in [docs/API.md](docs/API.md).
+
+## Safety Model
+
+- Commands must pass the backend whitelist.
+- High-risk commands require human-in-the-loop review.
+- The model can recommend actions but cannot execute shell commands.
+- Approval creates an execution ticket; it does not directly mutate Probe state.
+- Dry-run execution does not change the Probe.
+- Live execution is available only through the backend policy gate.
+- Ground Twin playback is tied to a frozen baseline and cannot safely reuse old compare ids after baseline invalidation.
+
+## Demo Checklist
+
+The full test and demo checklist is in [docs/DEEPREPAIR_TEST_INSTRUCTIONS.md](docs/DEEPREPAIR_TEST_INSTRUCTIONS.md).
+
+Recommended short demo:
+
+1. Start remote vLLM.
+2. Start the Probe backend.
+3. Start the frontend.
+4. Show Mission Control with live telemetry.
+5. Inject a thermal fault.
+6. Run E4B/Helm diagnosis.
+7. Show policy-gated recommendation.
+8. Open Ground Twin and run analysis.
+9. Show Plan Compare, playback, inspector, constraints, and telemetry projection.
+10. Open Ground Twin Testbed and show baseline freeze, assembly graph, Twin-only fault, campaign, and package flow.
+11. Open Open MCT and show real plus Twin telemetry channels.
+
+## Build Verification
+
+Frontend production build:
+
+```bash
+cd frontend
+npm run build
+```
+
+The current build may emit large chunk warnings because Open MCT, Three.js, and the Twin workspace are bundled into the demo build. Those warnings do not block the build.

@@ -1,6 +1,6 @@
 # DeepRepair v1 API
 
-Base URL 默认：`http://<pi-ip>:8010`
+Base URL 默认：`http://127.0.0.1:8010`
 
 ## Health
 
@@ -23,7 +23,7 @@ GET /api/telemetry/history?metric=thermal.temp_c&limit=300
 ## WebSocket 实时遥测
 
 ```text
-ws://<pi-ip>:8010/ws/telemetry
+ws://127.0.0.1:8010/ws/telemetry
 ```
 
 ## 注入故障
@@ -48,7 +48,7 @@ POST /api/command
 }
 ```
 
-## 运行端侧 Gemma 诊断
+## 运行端侧 E4B 诊断
 
 ```bash
 POST /api/agent/diagnose
@@ -57,7 +57,7 @@ POST /api/agent/diagnose
 }
 ```
 
-## Gemma 状态
+## E4B 状态
 
 ```bash
 GET /api/agent/gemma/status

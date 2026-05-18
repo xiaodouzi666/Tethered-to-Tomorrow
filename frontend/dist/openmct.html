@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DeepRepair Open MCT</title>
+    <style>
+      .home-link {
+        position: fixed;
+        top: 11px;
+        left: 50%;
+        z-index: 10000;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border: 1px solid rgba(123, 212, 255, 0.42);
+        border-radius: 8px;
+        background: rgba(8, 14, 26, 0.88);
+        color: #e8f0ff;
+        font: 800 18px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1;
+        text-decoration: none;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+        transform: translateX(-50%);
+      }
+
+      .home-link:hover,
+      .home-link:focus-visible {
+        border-color: rgba(123, 212, 255, 0.8);
+        background: rgba(24, 42, 72, 0.95);
+        outline: none;
+      }
+
+      .home-link::after {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 50%;
+        padding: 5px 8px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 6px;
+        background: rgba(20, 24, 34, 0.96);
+        color: #e8f0ff;
+        content: attr(data-tooltip);
+        font: 600 12px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        opacity: 0;
+        pointer-events: none;
+        transform: translate(-50%, -4px);
+        transition: opacity 120ms ease, transform 120ms ease;
+        white-space: nowrap;
+      }
+
+      .home-link:hover::after,
+      .home-link:focus-visible::after {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/openmct-1lylJnGs.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/probeClient-C-2kZ_--.js">
+    <link rel="modulepreload" crossorigin href="/assets/preload-helper-ckwbz45p.js">
+  </head>
+  <body style="margin:0; background:#080b12;">
+    <a class="home-link" href="/" aria-label="Back to Mission Control" data-tooltip="Back to Mission Control">&lt;</a>
+    <div id="openmct-root" style="height:100vh; width:100vw;"></div>
+  </body>
+</html>

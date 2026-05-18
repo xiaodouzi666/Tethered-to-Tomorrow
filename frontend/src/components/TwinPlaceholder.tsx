@@ -3,9 +3,9 @@ import { PauseCircle } from 'lucide-react';
 export function TwinPlaceholder() {
   return (
     <section className="panel twin-panel">
-      <div className="panel-title"><PauseCircle size={16}/> Digital Twin Panel（v1 占位）</div>
+      <div className="panel-title"><PauseCircle size={16}/> Digital Twin Panel (legacy placeholder)</div>
       <p>
-        当前第一版按你的要求先完成电脑端前端与树莓派端飞船模拟器联调；完整数字孪生将在下一版接入。
+        This legacy placeholder is kept for compatibility. The active Ground Twin Testbed now runs in the standalone Twin workspace.
       </p>
       <div className="twin-mock-chart">
         <div className="line real" />
