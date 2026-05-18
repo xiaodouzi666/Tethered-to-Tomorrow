@@ -20,7 +20,7 @@ The demo is designed for a Mac-hosted backend and frontend, with the E4B/Gemma m
 frontend/        React + TypeScript Mission Control UI, Ground Twin UI, Open MCT entrypoints
 pi_probe/        FastAPI Probe simulator, telemetry, agents, Helm, orchestrator, Twin engine
 scripts/         Install, backend, frontend, and remote vLLM startup scripts
-docs/            API notes, agent design notes, and final test/demo instructions
+docs/            Final test and demo instructions
 assets/          Shared 3D and visual assets
 ```
 
@@ -264,8 +264,6 @@ POST /api/twin/testbed/start
 POST /api/twin/testbed/{session_id}/campaign
 POST /api/twin/testbed/{session_id}/command-package
 ```
-
-More API notes are in [docs/API.md](docs/API.md).
 
 ## Safety Model
 
