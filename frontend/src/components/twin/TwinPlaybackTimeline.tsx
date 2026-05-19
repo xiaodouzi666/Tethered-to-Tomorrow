@@ -1,3 +1,4 @@
+import type { ChangeEvent, KeyboardEvent, PointerEvent } from 'react';
 import { Pause, Play, SkipBack, SkipForward } from 'lucide-react';
 import type { PlanPlaybackBundle, TwinPlaybackFrame } from '../../types/twin';
 
@@ -30,6 +31,31 @@ export function TwinPlaybackTimeline({
     risk: frame.constraint_frame.risk_score,
     fail: frame.constraint_frame.verdict === 'FAIL'
   }));
+  const seekToValue = (event: ChangeEvent<HTMLInputElement>) => {
+    onSeek(Number(event.target.value));
+  };
+  const seekFromPointer = (event: PointerEvent<HTMLInputElement>) => {
+    if (disabled || last <= 0) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    onSeek(Math.round(ratio * last));
+  };
+  const seekFromKeyboard = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (disabled) return;
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      onSeek(Math.max(0, index - 1));
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      onSeek(Math.min(last, index + 1));
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      onSeek(0);
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      onSeek(last);
+    }
+  };
 
   return (
     <div className="twin-playback-panel">
@@ -60,7 +86,9 @@ export function TwinPlaybackTimeline({
           disabled={disabled}
           max={last}
           min={0}
-          onChange={(event) => onSeek(Number(event.target.value))}
+          onChange={seekToValue}
+          onKeyDown={seekFromKeyboard}
+          onPointerDown={seekFromPointer}
           type="range"
           value={Math.min(index, last)}
         />

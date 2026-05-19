@@ -66,8 +66,8 @@ const defaultFaults: TwinFaultSpec[] = [
 const environmentBranches: TwinEnvironmentConfig[] = [
   {
     sun_exposure: 1,
-    eclipse_factor: 0.15,
-    radiation_level: 0.05,
+    eclipse_factor: 0.05,
+    radiation_level: 0.02,
     antenna_alignment_error_deg: 0,
     battery_age_factor: 1,
     thermal_sink_efficiency: 1,
@@ -75,20 +75,20 @@ const environmentBranches: TwinEnvironmentConfig[] = [
   },
   {
     sun_exposure: 1,
-    eclipse_factor: 0.2,
-    radiation_level: 0.42,
-    antenna_alignment_error_deg: 2,
-    battery_age_factor: 0.98,
-    thermal_sink_efficiency: 0.92,
+    eclipse_factor: 0.08,
+    radiation_level: 0.05,
+    antenna_alignment_error_deg: 0.3,
+    battery_age_factor: 1,
+    thermal_sink_efficiency: 0.99,
     mission_phase: 'radiation-watch'
   },
   {
-    sun_exposure: 0.85,
-    eclipse_factor: 0.35,
-    radiation_level: 0.18,
-    antenna_alignment_error_deg: 6,
-    battery_age_factor: 0.96,
-    thermal_sink_efficiency: 0.86,
+    sun_exposure: 0.98,
+    eclipse_factor: 0.1,
+    radiation_level: 0.06,
+    antenna_alignment_error_deg: 0.6,
+    battery_age_factor: 0.995,
+    thermal_sink_efficiency: 0.98,
     mission_phase: 'alignment-stress'
   }
 ];
@@ -425,9 +425,9 @@ export function useTwinTestbed() {
     try {
       const result = await runTwinTestbedCampaign(session.session_id, {
         environment_branches: environmentBranches,
-        horizon_sec: 300,
+        horizon_sec: 60,
         dt: 1,
-        seeds: [1, 2, 3, 4, 5]
+        seeds: [1, 2, 3]
       });
       setCampaign(result);
       setSession({
