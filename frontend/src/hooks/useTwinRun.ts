@@ -104,13 +104,6 @@ function matchesPlaybackAnchor(anchor: PlaybackAnchor | null, compareId: string,
   if (!anchor || anchor.compareId !== compareId || !snapshot) return false;
   if (anchor.activeFault !== snapshot.active_fault) return false;
   if (
-    typeof anchor.changeVersion === 'number' &&
-    typeof snapshot.change_version === 'number' &&
-    anchor.changeVersion !== snapshot.change_version
-  ) {
-    return false;
-  }
-  if (
     typeof anchor.snapshotSeq === 'number' &&
     typeof snapshot.seq === 'number' &&
     snapshot.seq - anchor.snapshotSeq > STALE_AFTER_SEQ_DELTA
@@ -175,7 +168,19 @@ export function useTwinRun(snapshot?: ProbeSnapshot | null) {
     return defaultEnvironment;
   }, [snapshot?.mode, snapshotMeta?.environment]);
 
-  const baselineStatus = useMemo<BaselineStatus>(() => getBaselineStatus(baseline, snapshot), [baseline, snapshot]);
+  const rawBaselineStatus = useMemo<BaselineStatus>(() => getBaselineStatus(baseline, snapshot), [baseline, snapshot]);
+  const trustedCompareId =
+    playbackBundle?.compare_id ?? compareResult?.compare_id ?? orchestratorSession?.twin_compare?.compare_id ?? null;
+  const baselineStatus = useMemo<BaselineStatus>(() => {
+    if (
+      rawBaselineStatus === 'invalidated' &&
+      trustedCompareId &&
+      matchesPlaybackAnchor(trustedPlaybackAnchorRef.current, trustedCompareId, snapshot)
+    ) {
+      return 'fresh';
+    }
+    return rawBaselineStatus;
+  }, [rawBaselineStatus, snapshot, trustedCompareId]);
 
   const refreshSnapshot = useCallback(async () => {
     setLoading('snapshot');
@@ -257,14 +262,15 @@ export function useTwinRun(snapshot?: ProbeSnapshot | null) {
     setPlaybackLoadingPlanId(planId);
     setError(null);
     setIsPlaying(false);
+    if (options?.trustFreshCompare) {
+      trustedPlaybackAnchorRef.current = buildPlaybackAnchor(compareId, snapshotRef.current);
+    }
     try {
       const bundle = await getPlanPlayback(compareId, planId);
       setPlaybackBundle(bundle);
       setSelectedPlanId(planId);
       setPlaybackIndex(0);
-      if (options?.trustFreshCompare) {
-        trustedPlaybackAnchorRef.current = buildPlaybackAnchor(compareId, snapshotRef.current);
-      }
+      setError(null);
     } catch (err) {
       setPlaybackBundle(null);
       setSelectedPlanId(null);
