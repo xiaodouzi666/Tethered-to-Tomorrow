@@ -545,8 +545,9 @@ code { color:#9ee7ff; }
 .twin-plan-compare { display:grid; gap:8px; min-width:0; }
 .twin-plan-grid { display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:8px; min-width:0; }
 .twin-plan-card { display:block; text-align:left; color:inherit; min-width:0; overflow:hidden; border:1px solid rgba(123,212,255,.13); background:rgba(255,255,255,.035); border-radius:10px; padding:8px; min-height:108px; }
-.twin-plan-card.best { border-color:rgba(123,212,255,.62); background:rgba(36,128,255,.14); }
-.twin-plan-card.selected { border-color:rgba(158,231,255,.9); box-shadow:0 0 0 1px rgba(123,212,255,.18), inset 0 0 24px rgba(37,93,151,.22); }
+.twin-plan-card.best { border-color:rgba(123,212,255,.18); background:rgba(255,255,255,.035); }
+.twin-plan-card.selected { border-color:rgba(158,231,255,.9); background:rgba(36,128,255,.14); box-shadow:0 0 0 1px rgba(123,212,255,.18), inset 0 0 24px rgba(37,93,151,.22); }
+.twin-plan-card.selected.best { border-color:rgba(158,231,255,.9); }
 .twin-plan-card.failed { border-color:rgba(255,120,145,.18); }
 .twin-plan-card.loading { cursor:wait; opacity:.78; }
 .twin-plan-card.pending { opacity:.7; }
@@ -650,6 +651,7 @@ code { color:#9ee7ff; }
   padding: 12px;
   background: linear-gradient(180deg, rgba(20, 32, 57, 0.72), rgba(10, 16, 29, 0.68));
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+  min-width: 0;
 }
 .assembly-workbench-header,
 .assembly-selected-title,
@@ -663,6 +665,12 @@ code { color:#9ee7ff; }
 .assembly-workbench-header {
   justify-content: space-between;
   margin-bottom: 10px;
+}
+.assembly-workbench-header .eyebrow {
+  display: block;
+  color: #9fc2ec;
+  font-size: 12px;
+  line-height: 1.2;
 }
 .assembly-workbench-header strong,
 .assembly-selected-title span {
@@ -955,4 +963,63 @@ code { color:#9ee7ff; }
   .trouble-columns {
     grid-template-columns: 1fr;
   }
+}
+
+.twin-page-main .mission-lab-panel .assembly-workbench {
+  border-radius: 12px;
+  padding: 10px;
+}
+.twin-page-main .mission-lab-panel .assembly-workbench-header {
+  align-items: flex-start;
+  gap: 10px;
+}
+.twin-page-main .mission-lab-panel .assembly-workbench-header strong {
+  font-size: 14px;
+  line-height: 1.15;
+}
+.twin-page-main .mission-lab-panel .assembly-workbench-actions {
+  gap: 6px;
+}
+.twin-page-main .mission-lab-panel .assembly-workbench-actions button {
+  width: 34px;
+  height: 34px;
+  justify-content: center;
+  padding: 0;
+}
+.twin-page-main .mission-lab-panel .assembly-status-strip {
+  padding: 6px 8px;
+}
+.twin-page-main .mission-lab-panel .component-palette {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 7px;
+}
+.twin-page-main .mission-lab-panel .component-palette button {
+  min-width: 0;
+  padding: 7px 9px;
+  white-space: nowrap;
+}
+.twin-page-main .mission-lab-panel .assembly-detail-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+.twin-page-main .mission-lab-panel .assembly-selected-card,
+.twin-page-main .mission-lab-panel .assembly-link-card {
+  min-height: auto;
+  padding: 10px;
+}
+.twin-page-main .mission-lab-panel .assembly-selected-card p {
+  margin: 14px 0 4px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.twin-page-main .mission-lab-panel .assembly-selected-title {
+  justify-content: flex-start;
+}
+.twin-page-main .mission-lab-panel .assembly-selected-title em {
+  margin-left: auto;
+}
+.twin-page-main .mission-lab-panel .link-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
 }
