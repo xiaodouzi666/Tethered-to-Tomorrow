@@ -356,7 +356,7 @@ export function useTwinRun(snapshot?: ProbeSnapshot | null) {
   }, [applyBestCompareResult, loadPlanPlayback]);
 
   useEffect(() => {
-    if (mode !== 'live' || orchestratorSession) return undefined;
+    if (mode !== 'live' || orchestratorSession || !snapshot) return undefined;
     let cancelled = false;
     const sessionId = window.localStorage.getItem(LAST_ORCHESTRATOR_SESSION_ID_KEY);
     if (!sessionId) return undefined;
@@ -366,6 +366,22 @@ export function useTwinRun(snapshot?: ProbeSnapshot | null) {
       try {
         const session = await getOrchestratorSession(sessionId);
         if (!cancelled) {
+          const status = getBaselineStatus(session.baseline, snapshotRef.current);
+          if (shouldBlockPlaybackForStatus(status)) {
+            forgetOrchestratorSession();
+            setBaseline(null);
+            setOrchestratorSession(null);
+            setCompareResult(null);
+            setRunResult(null);
+            setPlaybackBundle(null);
+            setSelectedPlanId(null);
+            setPlaybackIndex(0);
+            setPlaybackLoadingPlanId(null);
+            setIsPlaying(false);
+            trustedPlaybackAnchorRef.current = null;
+            setError(null);
+            return;
+          }
           await applyOrchestratorSession(session);
         }
       } catch {
@@ -379,7 +395,7 @@ export function useTwinRun(snapshot?: ProbeSnapshot | null) {
     return () => {
       cancelled = true;
     };
-  }, [applyOrchestratorSession, mode, orchestratorSession]);
+  }, [applyOrchestratorSession, mode, orchestratorSession, snapshot]);
 
   useEffect(() => {
     if (mode !== 'live' || brainMode !== 'gemma_helm') return;
